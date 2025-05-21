@@ -235,6 +235,28 @@ export async function updateTransport(id: string, transport: Omit<Transport, 'id
       return null;
     }
     
+    // First, verify the transport exists
+    try {
+      const { data: checkData, error: checkError } = await supabase
+        .from(TABLES.TRANSPORTS)
+        .select('id')
+        .eq('id', id)
+        .single();
+      
+      if (checkError) {
+        console.error('Error checking transport existence:', checkError);
+        return null;
+      }
+      
+      if (!checkData) {
+        console.error('Transport with ID does not exist:', id);
+        return null;
+      }
+    } catch (selectionError) {
+      console.error('Exception during transport existence check:', selectionError);
+      return null;
+    }
+    
     // Transform from application schema to database schema
     const transportData = {
       client_name: transport.client.name,
@@ -255,46 +277,52 @@ export async function updateTransport(id: string, transport: Omit<Transport, 'id
       car_seats: transport.carSeats || 0,
     };
     
-    const { data, error } = await supabase
-      .from(TABLES.TRANSPORTS)
-      .update(transportData)
-      .eq('id', id)
-      .select()
-      .single();
-    
-    if (error) {
-      console.error('Error updating transport:', error);
+    // Perform the update operation
+    try {
+      const { data, error } = await supabase
+        .from(TABLES.TRANSPORTS)
+        .update(transportData)
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) {
+        console.error('Error updating transport:', error);
+        return null;
+      }
+      
+      // Transform back to application schema
+      return {
+        id: data.id,
+        client: {
+          name: data.client_name,
+          phone: data.client_phone,
+        },
+        pickup: {
+          location: data.pickup_location,
+          time: data.pickup_time,
+          date: data.pickup_date,
+        },
+        dropoff: {
+          location: data.dropoff_location,
+          time: data.dropoff_time,
+          date: data.dropoff_date,
+        },
+        staff: {
+          requestedBy: data.staff_requester,
+          driver: data.staff_driver,
+          assistant: data.staff_assistant || undefined,
+        },
+        clientCount: data.client_count,
+        status: data.status,
+        notes: data.notes || undefined,
+        vehicle: data.vehicle || undefined,
+        carSeats: data.car_seats || 0,
+      };
+    } catch (updateError) {
+      console.error('Exception during update operation:', updateError);
       return null;
     }
-    
-    // Transform back to application schema
-    return {
-      id: data.id,
-      client: {
-        name: data.client_name,
-        phone: data.client_phone,
-      },
-      pickup: {
-        location: data.pickup_location,
-        time: data.pickup_time,
-        date: data.pickup_date,
-      },
-      dropoff: {
-        location: data.dropoff_location,
-        time: data.dropoff_time,
-        date: data.dropoff_date,
-      },
-      staff: {
-        requestedBy: data.staff_requester,
-        driver: data.staff_driver,
-        assistant: data.staff_assistant || undefined,
-      },
-      clientCount: data.client_count,
-      status: data.status,
-      notes: data.notes || undefined,
-      vehicle: data.vehicle || undefined,
-      carSeats: data.car_seats || 0,
-    };
   } catch (error) {
     console.error('Error updating transport:', error);
     return null;
@@ -312,25 +340,40 @@ export async function deleteTransport(id: string): Promise<boolean> {
     }
     
     // First, verify the transport exists
-    const { data: checkData, error: checkError } = await supabase
-      .from(TABLES.TRANSPORTS)
-      .select('id')
-      .eq('id', id)
-      .single();
-    
-    if (checkError || !checkData) {
-      console.error('Transport with ID does not exist or cannot be accessed:', id);
+    try {
+      const { data: checkData, error: checkError } = await supabase
+        .from(TABLES.TRANSPORTS)
+        .select('id')
+        .eq('id', id)
+        .single();
+      
+      if (checkError) {
+        console.error('Error checking transport existence:', checkError);
+        return false;
+      }
+      
+      if (!checkData) {
+        console.error('Transport with ID does not exist:', id);
+        return false;
+      }
+    } catch (selectionError) {
+      console.error('Exception during transport existence check:', selectionError);
       return false;
     }
     
     // Now perform the delete operation
-    const { error } = await supabase
-      .from(TABLES.TRANSPORTS)
-      .delete()
-      .eq('id', id);
-    
-    if (error) {
-      console.error('Error deleting transport:', error);
+    try {
+      const { error } = await supabase
+        .from(TABLES.TRANSPORTS)
+        .delete()
+        .eq('id', id);
+      
+      if (error) {
+        console.error('Error deleting transport:', error);
+        return false;
+      }
+    } catch (deleteError) {
+      console.error('Exception during delete operation:', deleteError);
       return false;
     }
     
