@@ -1,17 +1,9 @@
 [build]
-  command = "npm run build"
+  command = "npm ci && npm run build"
   publish = "out"
 
 [build.environment]
-  NETLIFY_NEXT_PLUGIN_SKIP = "true"
   NODE_VERSION = "18.17.0"
-  NPM_FLAGS = "--legacy-peer-deps"
 
 [[plugins]]
-  package = "@netlify/plugin-nextjs"
-
-# For single page applications
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200 
+  package = "@netlify/plugin-nextjs" 
