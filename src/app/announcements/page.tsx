@@ -193,7 +193,7 @@ export default function AnnouncementsPage() {
     const isEdit = announcements.some(a => a.id === announcement.id);
     
     try {
-      let result;
+      let result: Announcement | null = null;
       
       if (isEdit) {
         // Update the announcement in Supabase
