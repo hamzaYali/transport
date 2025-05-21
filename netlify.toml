@@ -1,6 +1,11 @@
 [build]
-command = "npm run build"
-publish = "out"
+  publish = "out"
+  command = "npm run build"
 
 [build.environment]
-NODE_VERSION = "18.17.0"
+  NODE_VERSION = "18.17.0"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
